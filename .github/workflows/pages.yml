@@ -1,0 +1,43 @@
+name: Deploy to GitHub Pages (User Page)
+
+on:
+  push:
+    branches: [ main ]   # main 브랜치에 push될 때 실행
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # 1. 의존성 설치
+      - run: npm install
+
+      # 2. Next.js 빌드 및 정적 내보내기
+      - run: npm run export
+
+      # 3. 결과물(out/)을 Pages 배포 아티팩트로 업로드
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # 4. Pages로 배포
+      - id: deployment
+        uses: actions/deploy-pages@v4
